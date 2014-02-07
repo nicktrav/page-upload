@@ -1,5 +1,5 @@
 // define the version of the script
-var VERSION = '0.1.0';
+var VERSION = '0.1.1';
 
 var data = {
   "version": VERSION,
@@ -89,7 +89,7 @@ function uploadObject() {
   var deferred = $.Deferred();
 
   s = JSON.stringify(data);
-  console.log('\tData to upload:', s);
+  // console.log('\tData to upload:', s);
 
   res = $.ajax({
 
@@ -142,7 +142,7 @@ function getPageActiveTime(time) {
 
 };
 
-function main() {
+function main(tab) {
 
   // get the time the button was clicked
   var timeClicked = new Date();
@@ -166,11 +166,21 @@ function main() {
   // notify the user of the outcome
   var uploadPromise = $.when(combinedPromise);
   uploadPromise.done(function(){
-    console.log('Upload complete!')
+
+    console.log('Upload complete!');
+
+    // change badge to green with text 'OK'
+    chrome.browserAction.setBadgeBackgroundColor({"color": "#00FF00"});
+    chrome.browserAction.setBadgeText({"text": "OK", "tabId": tab.id});
+
   });
   uploadPromise.fail(function(response){
     console.error('Upload failed. See log.');
     console.error(response);
+
+    // change badge to red with text 'X'
+    chrome.browserAction.setBadgeBackgroundColor({"color": "#FF0000"});
+    chrome.browserAction.setBadgeText({"text": "X", "tabId": tab.id});
   });
 
 };
