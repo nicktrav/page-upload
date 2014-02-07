@@ -1,22 +1,22 @@
-var data = {"timestamp": undefined, "url": undefined, "title": undefined, "html": undefined};
+// define the version of the script
+var VERSION = '0.1.0';
+
+var data = {
+  "version": VERSION,
+  "timestamp": undefined,
+  "timeOnPage": undefined,
+  "url": undefined,
+  "title": undefined,
+  "html": undefined
+};
 var myToken = '';
 var bucket = 'page-uploads-1';
-
-function getTimestamp() {
-
-  var deferred = $.Deferred();
-
-  data.timestamp = new Date().toJSON();
-
-  deferred.resolve(data);
-
-  return deferred.promise();
-
-};
 
 function getURL() {
 
   var deferred = $.Deferred();
+
+  console.log('Getting page URL ...');
 
   chrome.tabs.query({currentWindow: true, active: true}, function(tab) {
     data.url = tab[0].url;
@@ -30,6 +30,8 @@ function getURL() {
 function getTitle() {
 
   var deferred = $.Deferred();
+
+  console.log('Getting page title ...');
 
   chrome.tabs.query({currentWindow: true, active: true}, function(tab) {
 
@@ -50,6 +52,8 @@ function getHTML() {
 
   var deferred = $.Deferred();
 
+  console.log('Getting page HTML ...');
+
   chrome.tabs.query({currentWindow: true, active: true}, function(tab) {
 
     chrome.tabs.sendMessage(tab[0].id, {text: "getHTML"}, function(response) {
@@ -69,7 +73,12 @@ function authenticate() {
 
   var deferred = $.Deferred();
 
-  chrome.identity.getAuthToken({ 'interactive': true }, function(t) {myToken = t; deferred.resolve(t);});
+  console.log('Authenticating ...');
+
+  chrome.identity.getAuthToken({ 'interactive': true }, function(t) {
+    myToken = t;
+    deferred.resolve(t);
+  });
 
   return deferred.promise();
 
@@ -91,8 +100,41 @@ function uploadObject() {
       "Content-Type": "application/json",
     },
     data: s,
-    success: function(response) {deferred.resolve(response)},
-    error: function(response) {deferred.reject(response)}
+    success: function(response) {
+      deferred.resolve(response);
+    },
+    error: function(response) {
+      deferred.reject(response);
+    }
+
+  });
+
+  return deferred.promise();
+
+};
+
+// get time page has been active
+function getPageActiveTime(time) {
+
+  var deferred = $.Deferred();
+
+  // set the time the page was opened
+  data.timestamp = time.toJSON();
+
+  console.log('Getting page active time ...');
+
+  chrome.tabs.query({currentWindow: true, active: true}, function(tab) {
+
+    chrome.tabs.sendMessage(tab[0].id, {text: "getTime"}, function(response) {
+
+      var timeOnPage = (time.getTime() - response);
+      data.timeOnPage = timeOnPage;
+
+      console.log('Time on page (ms):', timeOnPage);
+
+      deferred.resolve(data);
+
+    });
 
   });
 
@@ -102,12 +144,15 @@ function uploadObject() {
 
 function main() {
 
+  // get the time the button was clicked
+  var timeClicked = new Date();
+
   // simultaneously authenticate with Google
   var uploadCabablePromise = $.when(authenticate());
-  uploadCabablePromise.done(function(t) {console.log('Authentication complete.', t)});
+  uploadCabablePromise.done(function(t) {console.log('Authentication tasks complete.', t)});
 
   // make sure all the data collection has been performed first
-  var collectDataPromise = $.when(getTimestamp(), getURL(), getTitle(), getHTML());
+  var collectDataPromise = $.when(getURL(), getTitle(), getHTML(), getPageActiveTime(timeClicked));
   // once all data collection complete, commence data upload
   collectDataPromise.done(function() {console.log('Collected all data.', data)});
 
@@ -115,17 +160,21 @@ function main() {
   var combinedPromise = $.when(uploadCabablePromise, collectDataPromise);
   // once both are done, upload data
   combinedPromise.done(function() {
-    console.log('Uploading object ...');
     uploadObject();
   });
 
   // notify the user of the outcome
   var uploadPromise = $.when(combinedPromise);
-  uploadPromise.done(function(){console.log('Upload complete!')});
-  uploadPromise.fail(function(response){console.log('Upload failed. See log.'); console.log(response)});
+  uploadPromise.done(function(){
+    console.log('Upload complete!')
+  });
+  uploadPromise.fail(function(response){
+    console.error('Upload failed. See log.');
+    console.error(response);
+  });
 
 };
 
-
-
+// add the listener to the click button
+// calls the main() function when clicked
 chrome.browserAction.onClicked.addListener(main);
