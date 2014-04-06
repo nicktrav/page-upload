@@ -1,5 +1,6 @@
 // define the version of the script
-var VERSION = '0.1.1';
+var VERSION = '0.1.2';
+var URL = 'http://23.251.159.124:1337';
 
 var data = {
   "version": VERSION,
@@ -9,8 +10,7 @@ var data = {
   "title": undefined,
   "html": undefined
 };
-var myToken = '';
-var bucket = 'page-uploads-1';
+
 
 function getURL() {
 
@@ -69,47 +69,36 @@ function getHTML() {
 
 };
 
-function authenticate() {
-
-  var deferred = $.Deferred();
-
-  console.log('Authenticating ...');
-
-  chrome.identity.getAuthToken({ 'interactive': true }, function(t) {
-    myToken = t;
-    deferred.resolve(t);
-  });
-
-  return deferred.promise();
-
-};
-
-function uploadObject() {
-
-  var deferred = $.Deferred();
+function uploadObject(tab) {
 
   s = JSON.stringify(data);
-  // console.log('\tData to upload:', s);
 
   res = $.ajax({
 
-    url: "https://www.googleapis.com/upload/storage/v1beta2/b/" + bucket + "/o?uploadType=media&name=upload-" + data.timestamp,
+    url: URL + "/page",
     type: "POST",
     headers: {
-      "Authorization": "Bearer " + myToken,
-      "Content-Type": "application/json",
+      "Content-Type": "application/json"
     },
-    data: s,
-    success: function(response) {
-      deferred.resolve(response);
-    },
-    error: function(response) {
-      deferred.reject(response);
-    }
+    data: s
+  })
+    .done(function(data){
+      console.log('Upload OK');
 
-  });
+      // change badge to green with text 'OK'
+      chrome.browserAction.setBadgeBackgroundColor({"color": "#00FF00"});
+      chrome.browserAction.setBadgeText({"text": "OK", "tabId": tab.id});
 
-  return deferred.promise();
+    })
+    .fail(function(data, textStatus){
+      console.log('Upload failed');
+      console.log(data);
+      console.log(textStatus);
+
+      // change badge to red with text 'X'
+      chrome.browserAction.setBadgeBackgroundColor({"color": "#FF0000"});
+      chrome.browserAction.setBadgeText({"text": "X", "tabId": tab.id});
+    });
 
 };
 
@@ -147,40 +136,15 @@ function main(tab) {
   // get the time the button was clicked
   var timeClicked = new Date();
 
-  // simultaneously authenticate with Google
-  var uploadCabablePromise = $.when(authenticate());
-  uploadCabablePromise.done(function(t) {console.log('Authentication tasks complete.', t)});
-
   // make sure all the data collection has been performed first
   var collectDataPromise = $.when(getURL(), getTitle(), getHTML(), getPageActiveTime(timeClicked));
   // once all data collection complete, commence data upload
   collectDataPromise.done(function() {console.log('Collected all data.', data)});
 
-  // make sure the authentication and data collection is done
-  var combinedPromise = $.when(uploadCabablePromise, collectDataPromise);
-  // once both are done, upload data
-  combinedPromise.done(function() {
-    uploadObject();
-  });
-
-  // notify the user of the outcome
-  var uploadPromise = $.when(combinedPromise);
+  // upload once all data is collected
+  var uploadPromise = $.when(collectDataPromise);
   uploadPromise.done(function(){
-
-    console.log('Upload complete!');
-
-    // change badge to green with text 'OK'
-    chrome.browserAction.setBadgeBackgroundColor({"color": "#00FF00"});
-    chrome.browserAction.setBadgeText({"text": "OK", "tabId": tab.id});
-
-  });
-  uploadPromise.fail(function(response){
-    console.error('Upload failed. See log.');
-    console.error(response);
-
-    // change badge to red with text 'X'
-    chrome.browserAction.setBadgeBackgroundColor({"color": "#FF0000"});
-    chrome.browserAction.setBadgeText({"text": "X", "tabId": tab.id});
+    uploadObject(tab);
   });
 
 };
