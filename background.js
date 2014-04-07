@@ -1,6 +1,9 @@
 // define the version of the script
 var VERSION = '0.1.2';
+<<<<<<< HEAD
 var URL = 'http://23.251.159.124:1337';
+=======
+>>>>>>> origin/development
 
 var data = {
   "version": VERSION,
@@ -8,9 +11,24 @@ var data = {
   "timeOnPage": undefined,
   "url": undefined,
   "title": undefined,
-  "html": undefined
+  "html": undefined,
+  "device": undefined,
+  "client": undefined
 };
 
+
+function getDevice() {
+  var deferred = $.Deferred();
+
+  console.log('Getting device ...');
+
+  chrome.runtime.getPlatformInfo(function(platformInfo) {data.device = platformInfo});
+  data.client = chrome.runtime.getManifest().oauth2.client_id;
+
+  deferred.resolve();
+
+  return deferred.promise();
+}
 
 function getURL() {
 
@@ -137,7 +155,7 @@ function main(tab) {
   var timeClicked = new Date();
 
   // make sure all the data collection has been performed first
-  var collectDataPromise = $.when(getURL(), getTitle(), getHTML(), getPageActiveTime(timeClicked));
+  var collectDataPromise = $.when(getURL(), getTitle(), getHTML(), getPageActiveTime(timeClicked), getDevice());
   // once all data collection complete, commence data upload
   collectDataPromise.done(function() {console.log('Collected all data.', data)});
 
