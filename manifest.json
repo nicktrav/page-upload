@@ -21,15 +21,6 @@
     "js":      ["content.js"]
     }],
 
-  "oauth2": {
-    // Deloitte: 320172760496-vklcrvecoetph0ti6chmt9ugouo76v5j.apps.googleusercontent.com
-    // nick-mbp-14: 320172760496-5a64vp37ebupoa1q6s68gb20lafad35j.apps.googleusercontent.com
-    "client_id": "320172760496-mtkl0rfk2sr75on8b71qch9l7esf4enu.apps.googleusercontent.com",
-    "scopes": [
-      "https://www.googleapis.com/auth/devstorage.read_write"
-    ]
-  },
+  "permissions": ["identity", "tabs", "http://*/page"]
 
-  "permissions": ["identity", "tabs"]
-
-} 
+}
