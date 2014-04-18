@@ -1,9 +1,6 @@
 // define the version of the script
-var VERSION = '0.1.2';
-<<<<<<< HEAD
-var URL = 'http://23.251.159.124:1337';
-=======
->>>>>>> origin/development
+var VERSION = '0.1.3';
+var URL = 'http://107.167.183.80:1337';
 
 var data = {
   "version": VERSION,
@@ -12,10 +9,8 @@ var data = {
   "url": undefined,
   "title": undefined,
   "html": undefined,
-  "device": undefined,
-  "client": undefined
+  "device": undefined
 };
-
 
 function getDevice() {
   var deferred = $.Deferred();
@@ -23,7 +18,6 @@ function getDevice() {
   console.log('Getting device ...');
 
   chrome.runtime.getPlatformInfo(function(platformInfo) {data.device = platformInfo});
-  data.client = chrome.runtime.getManifest().oauth2.client_id;
 
   deferred.resolve();
 
@@ -108,10 +102,11 @@ function uploadObject(tab) {
       chrome.browserAction.setBadgeText({"text": "OK", "tabId": tab.id});
 
     })
-    .fail(function(data, textStatus){
+    .fail(function(data, textStatus, errorThrown){
       console.log('Upload failed');
       console.log(data);
       console.log(textStatus);
+      console.log(errorThrown);
 
       // change badge to red with text 'X'
       chrome.browserAction.setBadgeBackgroundColor({"color": "#FF0000"});
@@ -126,7 +121,7 @@ function getPageActiveTime(time) {
   var deferred = $.Deferred();
 
   // set the time the page was opened
-  data.timestamp = time.toJSON();
+  data.timestamp = time.getTime();
 
   console.log('Getting page active time ...');
 
