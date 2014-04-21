@@ -9,7 +9,8 @@ var data = {
   "url": undefined,
   "title": undefined,
   "html": undefined,
-  "device": undefined
+  "device": undefined,
+  "scrollbar": {}
 };
 
 function getDevice() {
@@ -17,7 +18,7 @@ function getDevice() {
 
   console.log('Getting device ...');
 
-  chrome.runtime.getPlatformInfo(function(platformInfo) {data.device = platformInfo});
+  chrome.runtime.getPlatformInfo(function(platformInfo) {data.device = platformInfo;});
 
   deferred.resolve();
 
@@ -37,7 +38,7 @@ function getURL() {
 
   return deferred.promise();
 
-};
+}
 
 function getTitle() {
 
@@ -58,7 +59,7 @@ function getTitle() {
 
   return deferred.promise();
 
-};
+}
 
 function getHTML() {
 
@@ -79,7 +80,28 @@ function getHTML() {
 
   return deferred.promise();
 
-};
+}
+
+function getScrollbarData() {
+
+  var deferred = $.Deferred();
+
+  console.log('Getting scrollbar data ...');
+
+  chrome.tabs.query({currentWindow: true, active: true}, function(tab) {
+
+    chrome.tabs.sendMessage(tab[0].id, {text: "getScrollbarData"}, function(response) {
+
+      data.scrollbar = response;
+      deferred.resolve(data);
+
+    });
+
+  });
+
+  return deferred.promise();
+
+}
 
 function uploadObject(tab) {
 
@@ -113,7 +135,7 @@ function uploadObject(tab) {
       chrome.browserAction.setBadgeText({"text": "X", "tabId": tab.id});
     });
 
-};
+}
 
 // get time page has been active
 function getPageActiveTime(time) {
@@ -142,7 +164,7 @@ function getPageActiveTime(time) {
 
   return deferred.promise();
 
-};
+}
 
 function main(tab) {
 
@@ -150,9 +172,9 @@ function main(tab) {
   var timeClicked = new Date();
 
   // make sure all the data collection has been performed first
-  var collectDataPromise = $.when(getURL(), getTitle(), getHTML(), getPageActiveTime(timeClicked), getDevice());
+  var collectDataPromise = $.when(getURL(), getTitle(), getHTML(), getPageActiveTime(timeClicked), getDevice(), getScrollbarData());
   // once all data collection complete, commence data upload
-  collectDataPromise.done(function() {console.log('Collected all data.', data)});
+  collectDataPromise.done(function() {console.log('Collected all data.', data);});
 
   // upload once all data is collected
   var uploadPromise = $.when(collectDataPromise);
@@ -160,7 +182,7 @@ function main(tab) {
     uploadObject(tab);
   });
 
-};
+}
 
 // add the listener to the click button
 // calls the main() function when clicked

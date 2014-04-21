@@ -12,5 +12,17 @@ chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
     else if (msg.text && (msg.text == "getTime")) {
         sendResponse(startTime);
     }
+    else if (msg.text && (msg.text == "getScrollbarData")) {
+        
+        // window height and scroll positions
+        data = {};
+
+        data.scrollY = window.scrollY;
+        data.scrollX = window.scrollX;
+        data.innerHeight = window.innerHeight;
+        data.scrollHeight = document.body.scrollHeight;
+
+        sendResponse(data);
+    }
 
 });
