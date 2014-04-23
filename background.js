@@ -1,5 +1,5 @@
 // define the version of the script
-var VERSION = '0.1.3';
+var VERSION = '0.1.4';
 var URL = 'http://107.167.183.80:1337';
 
 var data = {
